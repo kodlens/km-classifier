@@ -1,0 +1,7 @@
+pandas
+#numpy
+#matplotlib
+#scikit-learn
+sqlalchemy
+beautifulsoup4
+pymysql
