@@ -4,10 +4,23 @@ from services import insert_scienceph, classify_and_insert_article
 
 def run():
 
-    # scienceph_df = load_from_scienceph() # get articles from scienceph
-    # print(scienceph_df)
-    # insert_scienceph(scienceph_df) # insert artcles to info table
+    # =========================================================
+    # This section here is for loading the articles from science ph DB
+    #scienceph_df = load_from_scienceph() # get articles from scienceph
+    #print(scienceph_df)
+    # =========================================================
     
+    
+    
+    # =========================================================
+    # This section here is for inserting the loaded scienceph articles to the KM info table
+    #insert_scienceph(scienceph_df) # insert artcles to info table
+    # =========================================================
+    
+    
+    # =========================================================
+    # This section is for classifying the inserted articles (infos)
+    # =========================================================
     infos_df = load_from_infos() # get articles from infos
     sh_ids, subject_headings = load_subject_headings() # get the subject headings
     
