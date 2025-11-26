@@ -16,7 +16,7 @@ def load_from_scienceph(
     engine = create_engine(f"mysql+pymysql://{user}:{password}@{host}/{database}")
 
     # Read table directly into DataFrame
-    query = f"SELECT article_id, title, introtext, alias, publish_date FROM {table}"
+    query = f"SELECT article_id, title, introtext, alias, publish_date FROM {table} WHERE is_published = 1"
     df = pd.read_sql(query, engine)
 
     # Example cleaning: drop NA values
