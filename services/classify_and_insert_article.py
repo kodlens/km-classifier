@@ -33,9 +33,9 @@ def classify_and_insert_article(info_id, description_text, sh_ids, subject_headi
     prompt = f"""
         You are a professional text classifier for a knowledge management system.
 
-        Given the article below, select the top {top_k} most relevant subject headings from the list provided.
+        Given the article below, select the top {top_k} most relevant subject headings from the Subject Headings.
         Each subject heading includes both an ID and label, formatted as: ID:Label. Strictly follow the format. 
-        Pick the id from the subject headings list. Do not pick on the article.
+        Strictly pick the id from the subject headings list only. Do not pick on the article or any number from article given or any republic act.
         Do not create your own subject headings, stick to the given subject headings id only. Avoid creating your own.
         Use the label for subject heading and make a relevance on the article and pick the correspond id of the selected subject heading.
         
@@ -50,6 +50,7 @@ def classify_and_insert_article(info_id, description_text, sh_ids, subject_headi
         - "label": the subject heading label (string)
         - "score": relevance score (float between 0 and 1)
         - "analysis": a short explanation of why this classification fits the article or empty string if nothing is relevant.
+        
         
         Example format:
         [
