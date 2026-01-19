@@ -4,12 +4,12 @@ from models import Base, Info
 from utils import html_cleaner
 from utils import slugify
 
-def insert_scienceph(data, table="km_mock_external") -> None:
+def insert_scienceph(data) -> None:
     # 👇 connection string directly here (MySQL local DB "scienceph")
     host="localhost"
     user="root"
     password=""
-    database="km_mock_external"
+    database="km_external_congress"
     
     if data is not None and not data.empty:
         # create engine + session for scienceph DB
@@ -28,6 +28,7 @@ def insert_scienceph(data, table="km_mock_external") -> None:
         for index, row in data.iterrows() :
             # insert one record
             new_info = Info(
+                source_id = row['article_id'],
                 title=row['title'], 
                 excerpt='', 
                 description=row['introtext'],
@@ -35,6 +36,7 @@ def insert_scienceph(data, table="km_mock_external") -> None:
                 #alias=slugify(row['title'])\
                 alias=row['alias'],
                 source='scienceph',
+                author_name=row['created_by_alias'],
                 publish_date=row['publish_date']
             )
             infos.append(new_info)

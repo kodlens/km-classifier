@@ -30,46 +30,94 @@ def classify_and_insert_article(info_id, description_text, sh_ids, subject_headi
     #     Do not add anything except valid json response.
     # """
     
-    prompt = f"""
-        You are a professional text classifier for a knowledge management system.
+    # prompt = f"""
+    #     You are a professional article classifier.
 
-        Given the article below, select the top {top_k} most relevant subject headings from the Subject Headings.
-        Each subject heading includes both an ID and label, formatted as: ID:Label. Strictly follow the format. 
-        Strictly pick the id from the subject headings list only. Do not pick on the article or any number from article given or any republic act.
-        Do not create your own subject headings, stick to the given subject headings id only. Avoid creating your own.
-        Use the label for subject heading and make a relevance on the article and pick the correspond id of the selected subject heading.
+    #     Given the article below, select the top {top_k} most relevant subject headings from the SubjectHeadings.
+    #     Each subject heading includes both an ID and label, formatted as: ID:Label. Strictly follow the format. 
+    #     Use the label for subject heading and make a relevance on the article and pick the correspond id of the selected subject heading.
         
-        Subject Headings:
+    #     SubjectHeadings:
+    #     { ' | '.join([f"{id}:{label}" for id, label in zip(sh_ids, subject_headings)]) }
+
+    #     Article:
+    #     \"\"\"{description_text}\"\"\"
+        
+        
+    #     Pick the id from the SubjectHeadings
+        
+    #     Respond **only** with a valid JSON array of objects, each having the following keys:
+    #     - "id": the SubjectHeading ID (string)
+    #     - "label": the SubjectHeading label (string)
+    #     - "score": relevance score (float between 0 and 1)
+    #     - "analysis": a short explanation of why this classification fits the article or empty string if nothing is relevant.
+        
+        
+    #     Example format:
+    #     [
+    #         {{
+    #             "id": 153,
+    #             "label": "Physics",
+    #             "score": 0.95,
+    #             "analysis": "The article discusses about motion."
+    #         }},
+    #         {{
+    #             "id": 181,
+    #             "label": "Aquaculture, Fisheries, Angling",
+    #             "score": 0.85,
+    #             "analysis": "It focuses on fishpond and study life in water."
+    #         }}
+    #     ]
+
+    #     Strictly do not include anything else, only valid JSON response.
+    # """
+    
+    
+    prompt = f"""
+        You are a strict classification engine, not a chatbot.
+
+        TASK:
+        Select up to {top_k} MOST RELEVANT subject headings from the list below.
+        If no subject heading is clearly relevant, return an EMPTY JSON array [].
+
+        RULES (MUST FOLLOW):
+        - Choose ONLY from the provided SubjectHeadings.
+        - Do NOT guess or infer loosely related topics.
+        - Only select a subject heading if it is DIRECTLY and CLEARLY related.
+        - Maximum output items: {top_k}
+        - Minimum relevance score to include an item: 0.50
+        - If fewer than {top_k} meet the threshold, return fewer.
+        - If below threshold, use the Others
+
+        SubjectHeadings (ID:Label):
         { ' | '.join([f"{id}:{label}" for id, label in zip(sh_ids, subject_headings)]) }
 
         Article:
         \"\"\"{description_text}\"\"\"
 
-        Respond **only** with a valid JSON array of objects, each having the following keys:
-        - "id": the subject heading ID (string)
-        - "label": the subject heading label (string)
-        - "score": relevance score (float between 0 and 1)
-        - "analysis": a short explanation of why this classification fits the article or empty string if nothing is relevant.
-        
-        
-        Example format:
+
+        OUTPUT FORMAT:
+        Respond ONLY with valid JSON.
+
+        Each object must contain:
+        - "id": SubjectHeading ID (number)
+        - "label": SubjectHeading label (string)
+        - "score": float between 0.70 and 1.00
+        - "analysis": short factual justification (1 sentence max)
+
+        EXAMPLE:
         [
-            {{
-                "id": "192",
-                "label": "Science and Technology Programs",
-                "score": 0.95,
-                "analysis": "The article discusses government-funded R&D and national technology initiatives."
-            }},
-            {{
-                "id": "23",
-                "label": "Languages and Linguistics",
-                "score": 0.85,
-                "analysis": "It focuses on language studies and communication research."
-            }}
+        {{
+            "id": 153,
+            "label": "Physics",
+            "score": 0.92,
+            "analysis": "The article discusses motion, force, and physical laws."
+        }}
         ]
 
-        Strictly do not include anything else, only valid JSON response.
-    """
+        Do NOT include explanations, markdown, or extra text.
+        Return ONLY JSON.
+        """
 
     # Send request to Ollama
     response = requests.post(OLLAMA_API, json={
@@ -151,7 +199,7 @@ def classify_and_insert_article(info_id, description_text, sh_ids, subject_headi
     host = "localhost"
     user = "root"
     password = ""
-    database = "km_mock_external"
+    database = "km_external_congress"
     table = "info_subject_headings"
 
     engine = create_engine(f"mysql+pymysql://{user}:{password}@{host}/{database}")
