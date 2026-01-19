@@ -4,9 +4,11 @@ import json
 from sqlalchemy import create_engine, text
 from datetime import datetime
 
-#OLLAMA_API = "http://127.0.0.1:11435/api/generate"
+OLLAMA_API = "http://127.0.0.1:11434/api/generate"
 #wsl hostname -I  <--- this command display IP
-OLLAMA_API = "http://172.29.194.254:11435/api/generate"
+#OLLAMA_API = "http://172.29.194.254:11435/api/generate"
+#OLLAMA_API = "http://172.25.214.89:11434/api/generate"
+
 
 MODEL = "llama3"
 
@@ -199,7 +201,7 @@ def classify_and_insert_article(info_id, description_text, sh_ids, subject_headi
     host = "localhost"
     user = "root"
     password = ""
-    database = "km_external_congress"
+    database = "km_test"
     table = "info_subject_headings"
 
     engine = create_engine(f"mysql+pymysql://{user}:{password}@{host}/{database}")

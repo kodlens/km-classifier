@@ -6,7 +6,7 @@ def load_subject_headings(
     host:str='localhost',
     user:str='root',
     password:str='',
-    database:str='km_external_congress',
+    database:str='km_test',
     table:str='subject_headings'
 ) -> Tuple[List[int], List[str]] :
     

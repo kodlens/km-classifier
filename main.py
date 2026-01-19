@@ -23,6 +23,7 @@ def run():
     # =========================================================
     infos_df = load_from_infos() # get articles from infos
     sh_ids, subject_headings = load_subject_headings() # get the subject headings
+    
     print(subject_headings)
     for index, row in infos_df.iterrows():
         print()

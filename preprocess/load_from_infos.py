@@ -5,7 +5,7 @@ def load_from_infos(
     host="localhost",
     user="root",
     password="",
-    database="km_external_congress",
+    database="km_test",
     table="infos"
 ) -> pd.DataFrame:
     """
@@ -16,8 +16,8 @@ def load_from_infos(
     engine = create_engine(f"mysql+pymysql://{user}:{password}@{host}/{database}")
 
     # Read table directly into DataFrame
-    query = f"SELECT id, source_id, title, excerpt, description, description_text, alias, publish_date, author_name FROM {table} WHERE id > (SELECT info_id FROM info_subject_headings ORDER BY id DESC LIMIT 1) ORDER BY id ASC"
-    #query = f"SELECT id, article_id, title, excerpt, description, description_text, alias, publish_date FROM {table} ORDER BY id ASC"
+    #query = f"SELECT id, source_id, title, excerpt, description, description_text, alias, publish_date, author_name FROM {table} WHERE id > (SELECT info_id FROM info_subject_headings ORDER BY id DESC LIMIT 1) ORDER BY id ASC"
+    query = f"SELECT id, source_id, title, excerpt, description, description_text, alias, publish_date FROM {table} ORDER BY id ASC LIMIT 10"
     df = pd.read_sql(query, engine)
 
     # Example cleaning: drop NA values
