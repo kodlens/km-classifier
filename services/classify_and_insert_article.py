@@ -133,7 +133,7 @@ def classify_and_insert_article(info_id, description_text, sh_ids, subject_headi
 
     result_text = response.json().get("response", "").strip()
     print()
-    print('OLLAMA RESPONSE: ', result_text)
+    #print('OLLAMA RESPONSE: ', result_text)
     
     try:
         parsed = json.loads(result_text)
