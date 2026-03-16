@@ -6,11 +6,20 @@ from datetime import datetime
 
 #OLLAMA_API = "http://127.0.0.1:11435/api/generate"
 #wsl hostname -I  <--- this command display IP
-OLLAMA_API = "http://172.29.194.254:11435/api/generate"
+#OLLAMA_API = "http://172.29.194.254:11435/api/generate"
+OLLAMA_API = "http://127.0.0.1:11434/api/generate"
 
 MODEL = "llama3"
 
-def classify_and_insert_article(info_id, description_text, sh_ids, subject_headings, top_k=5):
+def classify_and_insert_article(
+        engine,
+        material_id, 
+        clean_html, 
+        sh_ids, 
+        subject_headings, 
+        top_k,
+        
+    ):
     # Create prompt for Ollama classification
     # prompt = f"""
     #     You are a professional text classifier for a knowledge management system.
@@ -19,7 +28,7 @@ def classify_and_insert_article(info_id, description_text, sh_ids, subject_headi
     #     {' | '.join(sh_ids) + ':' .join(subject_headings)}
 
     #     Article:
-    #     \"\"\"{description_text}\"\"\"
+    #     \"\"\"{clean_html}\"\"\"
 
     #     Respond only with a valid JSON array of objects, each having "id", "label", "score" and "analysis" keys, like:
     #     [
@@ -30,46 +39,90 @@ def classify_and_insert_article(info_id, description_text, sh_ids, subject_headi
     #     Do not add anything except valid json response.
     # """
     
-    prompt = f"""
-        You are a professional text classifier for a knowledge management system.
+    # prompt = f"""
+    #     You are a professional article classifier.
 
-        Given the article below, select the top {top_k} most relevant subject headings from the Subject Headings.
-        Each subject heading includes both an ID and label, formatted as: ID:Label. Strictly follow the format. 
-        Strictly pick the id from the subject headings list only. Do not pick on the article or any number from article given or any republic act.
-        Do not create your own subject headings, stick to the given subject headings id only. Avoid creating your own.
-        Use the label for subject heading and make a relevance on the article and pick the correspond id of the selected subject heading.
+    #     Given the article below, select the top {top_k} most relevant subject headings from the SubjectHeadings.
+    #     Each subject heading includes both an ID and label, formatted as: ID:Label. Strictly follow the format. 
+    #     Use the label for subject heading and make a relevance on the article and pick the correspond id of the selected subject heading.
         
-        Subject Headings:
+    #     SubjectHeadings:
+    #     { ' | '.join([f"{id}:{label}" for id, label in zip(sh_ids, subject_headings)]) }
+
+    #     Article:
+    #     \"\"\"{clean_html}\"\"\"
+        
+        
+    #     Pick the id from the SubjectHeadings
+        
+    #     Respond **only** with a valid JSON array of objects, each having the following keys:
+    #     - "id": the SubjectHeading ID (string)
+    #     - "label": the SubjectHeading label (string)
+    #     - "score": relevance score (float between 0 and 1)
+    #     - "analysis": a short explanation of why this classification fits the article or empty string if nothing is relevant.
+        
+        
+    #     Example format:
+    #     [
+    #         {{
+    #             "id": 153,
+    #             "label": "Physics",
+    #             "score": 0.95,
+    #             "analysis": "The article discusses about motion."
+    #         }},
+    #         {{
+    #             "id": 181,
+    #             "label": "Aquaculture, Fisheries, Angling",
+    #             "score": 0.85,
+    #             "analysis": "It focuses on fishpond and study life in water."
+    #         }}
+    #     ]
+
+    #     Strictly do not include anything else, only valid JSON response.
+    # """
+    
+    
+    prompt = f"""
+        You are a content classifier.
+
+        TASK:
+        - Choose ONLY from the provided categories.
+        - Do NOT guess or infer loosely related topics.
+        - Only select a subject heading if it is DIRECTLY and CLEARLY related.
+        - Maximum output items: {top_k}
+        - Minimum relevance score to include an item: 0.50
+        - If fewer than {top_k} meet the threshold, return fewer.
+        - If below threshold, use the Others
+
+        Categories (ID:Label):
         { ' | '.join([f"{id}:{label}" for id, label in zip(sh_ids, subject_headings)]) }
 
-        Article:
-        \"\"\"{description_text}\"\"\"
+        Content:
+        \"\"\"{clean_html}\"\"\"
 
-        Respond **only** with a valid JSON array of objects, each having the following keys:
-        - "id": the subject heading ID (string)
-        - "label": the subject heading label (string)
-        - "score": relevance score (float between 0 and 1)
-        - "analysis": a short explanation of why this classification fits the article or empty string if nothing is relevant.
-        
-        
-        Example format:
+
+        OUTPUT FORMAT:
+        Respond ONLY with valid JSON.
+
+        Each object must contain:
+        - "id":  ID (number)
+        - "label": Category label (string)
+        - "score": float between 0.70 and 1.00
+        - "analysis": short factual justification (1 sentence max)
+
+        EXAMPLE:
         [
-            {{
-                "id": "192",
-                "label": "Science and Technology Programs",
-                "score": 0.95,
-                "analysis": "The article discusses government-funded R&D and national technology initiatives."
-            }},
-            {{
-                "id": "23",
-                "label": "Languages and Linguistics",
-                "score": 0.85,
-                "analysis": "It focuses on language studies and communication research."
-            }}
+        {{
+            "id": 153,
+            "label": "Physics",
+            "score": 0.92,
+            "analysis": "The article discusses motion, force, and physical laws."
+        }}
         ]
 
-        Strictly do not include anything else, only valid JSON response.
-    """
+        Do NOT include explanations, markdown, or extra text.
+        Return ONLY JSON.
+        """
 
     # Send request to Ollama
     response = requests.post(OLLAMA_API, json={
@@ -79,7 +132,7 @@ def classify_and_insert_article(info_id, description_text, sh_ids, subject_headi
         "options": {"temperature": 0.2}
     })
     
-    #print("PROMPT: ", prompt)
+    print("PROMPT: ", prompt)
 
     result_text = response.json().get("response", "").strip()
     print()
@@ -148,17 +201,10 @@ def classify_and_insert_article(info_id, description_text, sh_ids, subject_headi
     #         print(f"No match found for '{lbl}'\n")
 
     # DB connection info
-    host = "localhost"
-    user = "root"
-    password = ""
-    database = "km_mock_external"
-    table = "info_subject_headings"
-
-    engine = create_engine(f"mysql+pymysql://{user}:{password}@{host}/{database}")
-
+    table = "material_subject_headings"
     insert_query = text(f"""
-        INSERT INTO {table} (info_id, subject_heading_id, score, analysis, created_at)
-        VALUES (:info_id, :subject_heading_id, :score, :analysis, :created_at)
+        INSERT INTO {table} (material_id, subject_heading_id, score, analysis, created_at)
+        VALUES (:material_id, :subject_heading_id, :score, :analysis, :created_at)
     """)
     
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -176,7 +222,7 @@ def classify_and_insert_article(info_id, description_text, sh_ids, subject_headi
             print(f'ANALYSIS: {res["analysis"]}')
             if res["score"] > 0.5 :
                 conn.execute(insert_query, {
-                    "info_id": info_id,
+                    "material_id": material_id,
                     "subject_heading_id": res["id"],
                     "score": res["score"],
                     "analysis": res["analysis"],
