@@ -132,7 +132,7 @@ def classify_and_insert_article(
         "options": {"temperature": 0.2}
     })
     
-    print("PROMPT: ", prompt)
+    #print("PROMPT: ", prompt)
 
     result_text = response.json().get("response", "").strip()
     print()
